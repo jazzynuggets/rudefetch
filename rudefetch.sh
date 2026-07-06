@@ -38,18 +38,14 @@ mem_used_mb=$((mem_used_kb / 1024))
 gpu=$(lspci 2>/dev/null | grep -Ei 'vga|3d|display' | head -n1 | sed 's/.*: //' | sed 's/\[.*\]//; s/(rev .*)$//' | xargs)
 [ -z "$gpu" ] && gpu="Unknown"
 draw_box() {
-    local content="$1"
-    local maxlen=0
-    local line
-    while IFS= read -r line; do
-        [ ${#line} -gt "$maxlen" ] && maxlen=${#line}
-    done <<< "$content"
-    local pad=$((maxlen + 2))
-    local border=$(printf -- '-%.0s' $(seq 1 "$pad"))
+    content="$1"
+    maxlen=$(printf "%s\n" "$content" | awk '{ if (length($0) > m) m = length($0) } END { print m }')
+    pad=$((maxlen + 2))
+    border=$(printf -- '-%.0s' $(seq 1 "$pad"))
     printf "+%s+\n" "$border"
-    while IFS= read -r line; do
+    printf "%s\n" "$content" | while IFS= read -r line; do
         printf "| %-*s |\n" "$maxlen" "$line"
-    done <<< "$content"
+    done
     printf "+%s+\n" "$border"
 }
 opener=$(printf "%s\n" \
@@ -71,3 +67,6 @@ info=$(printf "%-55s: %s\n" \
     "Here is your chud of a cpu taking a load" "$load" \
     "Here is your ram, consider downloading more" "${mem_used_mb}MB/${mem_total_mb}MB" \
     "Here is the gpu that cant even run doom" "$gpu"
+)
+draw_box "$opener"
+draw_box "$info"
